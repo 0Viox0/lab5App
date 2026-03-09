@@ -22,18 +22,27 @@
         }
     </style>
     <script>
+        let csrfToken = null;
+
+        const loadToken = async () => {
+            const response = await fetch("http://localhost:10001/csrf-token");
+            const data = await response.json();
+            csrfToken = data.csrfToken;
+        };
+
         const sendRequest = async () => {
-            var name = await document.getElementById("name").value;
-            var email = await document.getElementById("email").value;
-            var password = await document.getElementById("password").value;
-            
+            var name = document.getElementById("name").value;
+            var email = document.getElementById("email").value;
+            var password = document.getElementById("password").value;
+
             const request = new XMLHttpRequest();
             request.open("POST", "http://localhost:10001/register");
             request.setRequestHeader("Content-Type", "application/json");
+            request.setRequestHeader("CSRF-Token", csrfToken);
 
             request.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
-                    var div = document.getElementById('data').innerHTML = this.responseText;
+                    document.getElementById('data').innerHTML = this.responseText;
                 }
             };
 
@@ -41,12 +50,12 @@
                 name: name,
                 email: email,
                 password: password
-            }
+            };
 
-            const payloadJSON = JSON.stringify(payload);
+            request.send(JSON.stringify(payload));
+        };
 
-            request.send(payloadJSON);
-        }
+        window.onload = loadToken;
     </script>
 </head>
 <body>

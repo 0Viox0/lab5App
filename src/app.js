@@ -3,6 +3,9 @@ const bodyParser = require('body-parser');
 const path = require('path');
 const mongoose = require('mongoose');
 const db = require('./db');
+const csurf = require('csurf');
+const escapeHtml = require('escape-html');
+const cookieParser = require('cookie-parser');
 
 const server = express();
 
@@ -11,6 +14,8 @@ const PORT = 10001;
 var emailRegex = /^[-!#$%&'*+\/0-9=?A-Z^_a-z{|}~](\.?[-!#$%&'*+\/0-9=?A-Z^_a-z`{|}~])*@[a-zA-Z0-9](-*\.?[a-zA-Z0-9])*\.[a-zA-Z](-?[a-zA-Z0-9])+$/;
 
 server.use(bodyParser.json());
+server.use(csurf())
+server.use(cookieParser());
 
 server.use(function(request, response, next) {
     response.header("Access-Control-Allow-Origin", "http://localhost:10001");
@@ -44,8 +49,9 @@ server.post("/login", async (request, response) => {
         console.log(user.length)
 
         if(user.length == 0) { response.send('Bad Credentials'); }
+        const safeUser = escapeHtml(user.toString())
 
-        response.send("<h1>Hello, Welcome Again!</h1><h3>" + user + "</h3>");
+        response.send("<h1>Hello, Welcome Again!</h1><h3>" + safeUser + "</h3>");
     }
    
     catch(error) { throw error; }
@@ -67,13 +73,19 @@ server.post("/register", async (request, response) => {
 
             if(!user) { response.send('User Already Exists'); }
 
-            response.send("<h1>Welcome to Mongection System</h1><h3>" + user.email + "</h3>");
+            const safeUserEmail = escapeHtml(user.email)
+
+            response.send("<h1>Welcome to Mongection System</h1><h3>" + safeUserEmail + "</h3>");
         }
         
     }
 
     catch(error) { throw error; }
 
+});
+
+server.get("/csrf-token", (req, res) => {
+    res.json({ csrfToken: req.csrfToken() });
 });
 
 mongoose.connect(`mongodb://${process.env.DBUSER}:${process.env.DBPASS}@mongo:27017/mongection`, {useNewUrlParser: true})

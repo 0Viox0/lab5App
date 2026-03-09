@@ -22,32 +22,38 @@
         }
     </style>
     <script>
+        let csrfToken = null;
+
+        const loadToken = async () => {
+            const response = await fetch("http://localhost:10001/csrf-token");
+            const data = await response.json();
+            csrfToken = data.csrfToken;
+        };
+
         const sendRequest = async () => {
-            var email = await document.getElementById("email").value;
-            var password = await document.getElementById("password").value;
-            
+            var email = document.getElementById("email").value;
+            var password = document.getElementById("password").value;
+
             const request = new XMLHttpRequest();
             request.open("POST", "http://localhost:10001/login");
             request.setRequestHeader("Content-Type", "application/json");
+            request.setRequestHeader("CSRF-Token", csrfToken);
 
             request.onreadystatechange = function() {
                 if (this.readyState == 4 && this.status == 200) {
-                    var div = document.getElementById('data').innerHTML = this.responseText;
+                    document.getElementById('data').innerHTML = this.responseText;
                 }
             };
 
             const payload = {
                 email: email,
                 password: password
-            }
+            };
 
-            const payloadJSON = JSON.stringify(payload);
+            request.send(JSON.stringify(payload));
+        };
 
-            payloadJSON.email = email;
-            payloadJSON.password = password
-
-            request.send(payloadJSON);
-        }
+        window.onload = loadToken;
     </script>
 </head>
 <body>
